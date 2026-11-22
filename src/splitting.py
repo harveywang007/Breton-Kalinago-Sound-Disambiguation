@@ -8,17 +8,14 @@ def create_folder(folder_name):
     os.makedirs(folder_name, exist_ok=True)
 
 
-def split(file_input, output_folder, count, **pages):
+def split(file_input, output_folder, **pages):
     if not os.path.exists(file_input):
         raise ValueError("This file doesn't exist!")
 
     for section, page_range in pages.items():
         doc = pymupdf.open(file_input)
 
-        if split_helper(doc, file_input, output_folder, section, page_range):
-            count += 1
-
-    return count
+        split_helper(doc, file_input, output_folder, section, page_range)
 
 
 def split_helper(doc, file_input, output_folder, section, page_range):
@@ -36,10 +33,10 @@ def split_helper(doc, file_input, output_folder, section, page_range):
     if os.path.exists(save_path):
         print(f"{file_name} exists. Skipping...")
         doc.close()
-        return False
+        return
 
     print("Saving to " + save_path + ".")
     doc.save(save_path)
     doc.close()
 
-    return True
+    return
