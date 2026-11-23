@@ -1,7 +1,7 @@
 import os
 import pymupdf
 
-from constants import *
+from src.constants import *
 
 
 def create_folder(folder_name):
