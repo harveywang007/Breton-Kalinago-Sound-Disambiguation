@@ -1,4 +1,4 @@
-from unittest.mock import Mock
+from unittest.mock import Mock, patch, call
 
 import pymupdf
 import pytest
@@ -27,6 +27,14 @@ def test_split_rejects_missing_input(tmp_path):
 
     with pytest.raises(ValueError, match="This file doesn't exist!"):
         splitting.split(str(missing_file), str(tmp_path), section=[0, 1])
+
+
+def test_split_rejects_no_section_input(tmp_path):
+    source = tmp_path / "source.pdf"
+    source.touch()
+
+    with pytest.raises(ValueError, match="No page ranges provided for splitting."):
+        splitting.split(str(source), str(tmp_path))
 
 
 @pytest.mark.parametrize("page_range", ([0, 0], (0, 0)))
@@ -88,3 +96,55 @@ def test_split_helper_selects_saves_and_closes_document(
     document.select.assert_called_once_with(expected_pages)
     document.save.assert_called_once_with(expected_path)
     document.close.assert_called_once_with()
+
+
+def test_split_helper_skips_existing_output(tmp_path, capsys):
+    source = tmp_path / "source.pdf"
+    existing_output = tmp_path / f"source - Part{constants.PDF_SUFFIX}"
+    existing_output.touch()
+
+    document = mockument()
+
+    splitting.split_helper(
+        document,
+        str(source),
+        str(tmp_path),
+        "part",
+        [0, 1],
+    )
+
+    document.select.assert_called_once_with([0, 1])
+    document.save.assert_not_called()
+    document.close.assert_called_once_with()
+    assert "source - Part.pdf exists. Skipping..." in capsys.readouterr().out
+
+
+def test_split_opens_source_for_each_section(tmp_path):
+    source = tmp_path / "source.pdf"
+    source.touch()
+
+    first_part = mockument()
+    second_part = mockument()
+
+    with patch.object(
+        pymupdf,
+        "open",
+        side_effect=[first_part, second_part],
+    ) as open_mock:
+        result = splitting.split(
+            str(source),
+            str(tmp_path),
+            introduction=[0, 1],
+            appendix=[2, 3],
+        )
+
+    assert result is None
+    assert open_mock.call_args_list == [call(str(source)), call(str(source))]
+    first_part.select.assert_called_once_with([0, 1])
+    second_part.select.assert_called_once_with([2, 3])
+    first_part.save.assert_called_once_with(
+        str(tmp_path / f"source - Introduction{constants.PDF_SUFFIX}")
+    )
+    second_part.save.assert_called_once_with(
+        str(tmp_path / f"source - Appendix{constants.PDF_SUFFIX}")
+    )
