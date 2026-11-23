@@ -1,4 +1,4 @@
-from unittest.mock import Mock, patch, call
+from unittest.mock import Mock
 
 import pymupdf
 import pytest
@@ -10,14 +10,6 @@ def test_create_folder_creates_directory(tmp_path):
     folder = tmp_path / "output"
 
     splitting.create_folder(str(folder))
-
-    assert folder.is_dir()
-
-
-def test_create_folder_accepts_existing_directory(tmp_path):
-    folder = tmp_path / "output"
-
-    splitting.create_folder(str(tmp_path))
 
     assert folder.is_dir()
 
@@ -77,10 +69,10 @@ def mockument():
     ],
 )
 def test_split_helper_selects_saves_and_closes_document(
-    tmp_path, page_range, expected_pages
+    tmp_path, mockument, page_range, expected_pages
 ):
     source = tmp_path / "source.pdf"
-    document = mockument()
+    document = mockument
 
     splitting.split_helper(
         document,
@@ -93,17 +85,27 @@ def test_split_helper_selects_saves_and_closes_document(
     expected_path = str(
         tmp_path / f"source - Introduction{constants.PDF_SUFFIX}"
     )
-    document.select.assert_called_once_with(expected_pages)
-    document.save.assert_called_once_with(expected_path)
-    document.close.assert_called_once_with()
+
+    assert (tmp_path / f"source - Introduction{constants.PDF_SUFFIX}").is_file()
+
+    output = pymupdf.open(expected_path)
+    try:
+        assert len(output) == len(expected_pages)
+        assert [page.get_text().strip() for page in output] == [
+            f"This is sample text on page {page_num + 1} of the test PDF."
+            for page_num in expected_pages
+        ]
+    finally:
+        output.close()
 
 
-def test_split_helper_skips_existing_output(tmp_path, capsys):
+def test_split_helper_skips_existing_output(tmp_path, mockument,capsys):
     source = tmp_path / "source.pdf"
     existing_output = tmp_path / f"source - Part{constants.PDF_SUFFIX}"
+    existing_output.write_text("This should not change!", encoding="utf-8")
     existing_output.touch()
 
-    document = mockument()
+    document = mockument
 
     splitting.split_helper(
         document,
@@ -113,38 +115,42 @@ def test_split_helper_skips_existing_output(tmp_path, capsys):
         [0, 1],
     )
 
-    document.select.assert_called_once_with([0, 1])
-    document.save.assert_not_called()
-    document.close.assert_called_once_with()
-    assert "source - Part.pdf exists. Skipping..." in capsys.readouterr().out
+    assert existing_output.read_text(encoding="utf-8") == "This should not change!"
+
+    captured = capsys.readouterr()
+    assert f"{existing_output.name} exists. Skipping..." in captured.out
 
 
-def test_split_opens_source_for_each_section(tmp_path):
+def test_split_opens_source_for_each_section(tmp_path, mockument):
     source = tmp_path / "source.pdf"
-    source.touch()
+    mockument.save(str(source))
+    mockument.close()
 
-    first_part = mockument()
-    second_part = mockument()
+    result = splitting.split(
+        str(source),
+        str(tmp_path),
+        introduction=[0, 1],
+        appendix=[2, 3],
+    )
 
-    with patch.object(
-        pymupdf,
-        "open",
-        side_effect=[first_part, second_part],
-    ) as open_mock:
-        result = splitting.split(
-            str(source),
-            str(tmp_path),
-            introduction=[0, 1],
-            appendix=[2, 3],
-        )
+    intro_path = tmp_path / f"source - Introduction{constants.PDF_SUFFIX}"
+    appendix_path = tmp_path / f"source - Appendix{constants.PDF_SUFFIX}"
 
     assert result is None
-    assert open_mock.call_args_list == [call(str(source)), call(str(source))]
-    first_part.select.assert_called_once_with([0, 1])
-    second_part.select.assert_called_once_with([2, 3])
-    first_part.save.assert_called_once_with(
-        str(tmp_path / f"source - Introduction{constants.PDF_SUFFIX}")
-    )
-    second_part.save.assert_called_once_with(
-        str(tmp_path / f"source - Appendix{constants.PDF_SUFFIX}")
-    )
+    assert intro_path.is_file()
+    assert appendix_path.is_file()
+
+    intro = pymupdf.open(str(intro_path))
+    appendix = pymupdf.open(str(appendix_path))
+    try:
+        assert [page.get_text().strip() for page in intro] == [
+            "This is sample text on page 1 of the test PDF.",
+            "This is sample text on page 2 of the test PDF.",
+        ]
+        assert [page.get_text().strip() for page in appendix] == [
+            "This is sample text on page 3 of the test PDF.",
+            "This is sample text on page 4 of the test PDF.",
+        ]
+    finally:
+        intro.close()
+        appendix.close()
