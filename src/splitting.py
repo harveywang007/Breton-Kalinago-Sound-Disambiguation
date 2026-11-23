@@ -12,6 +12,9 @@ def split(file_input, output_folder, **pages):
     if not os.path.exists(file_input):
         raise ValueError("This file doesn't exist!")
 
+    if not pages:
+        raise ValueError("No page ranges provided for splitting.")
+
     for section, page_range in pages.items():
         doc = pymupdf.open(file_input)
 
