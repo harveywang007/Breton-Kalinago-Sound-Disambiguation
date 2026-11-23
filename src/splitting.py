@@ -27,7 +27,10 @@ def split_helper(doc, file_input, output_folder, section, page_range):
 
     doc.select(pages)
 
-    file_name = os.path.split(file_input)[-1] + " - " + section.capitalize() + PDF_SUFFIX
+    file_name_full = os.path.split(file_input)[-1]
+    file_name_only, _ = os.path.splitext(file_name_full)
+
+    file_name = file_name_only + " - " + section.capitalize() + PDF_SUFFIX
     save_path = os.path.join(output_folder, file_name)
 
     if os.path.exists(save_path):
