@@ -29,6 +29,8 @@ def split_helper(doc, file_input, output_folder, section, page_range):
     pages = list(range(page_range[0], page_range[1] + 1))
 
     doc.select(pages)
+    new_doc = pymupdf.open()
+    new_doc.insert_pdf(doc)
 
     file_name_full = os.path.split(file_input)[-1]
     file_name_only, _ = os.path.splitext(file_name_full)
@@ -42,7 +44,10 @@ def split_helper(doc, file_input, output_folder, section, page_range):
         return
 
     print("Saving to " + save_path + ".")
-    doc.save(save_path)
+
+    new_doc.save(save_path, garbage=4)
+
+    new_doc.close()
     doc.close()
 
     return
