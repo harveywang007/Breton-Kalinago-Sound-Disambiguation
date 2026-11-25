@@ -28,7 +28,9 @@ def main():
             "English": (174, 296)
         },
         "Carib Grammar": {"Dict": (224, 451)},
-        "Voyage de la France equinoxiale en l'isle de Cayenne": {"Dict": (0, 38)}
+        "Introduction à la langue des galibis": {"Book": (0, 28)},
+        "Véritable relation": {"Dict": (7, 40)},
+        "Voyage de la France equinoxiale en l'isle de Cayenne": {"Book": (0, 38)}
     }
 
     parallelize_split(files, DICT_FOLDER)
