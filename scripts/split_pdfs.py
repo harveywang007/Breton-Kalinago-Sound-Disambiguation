@@ -19,14 +19,8 @@ def main():
             "Chanson": (170, 173)
         },
         "A Carib Dictionary": {"Dict": (27, 770)},
-        "La langue arawak de Guyane": {
-            "Lokono": (37, 239),
-            "Français": (241, 315)
-        },
-        "Wayuu Dictionary": {
-            "Wayuu": (12, 172),
-            "English": (174, 296)
-        },
+        "La langue arawak de Guyane": {"Lokono": (37, 239)},
+        "Wayuu Dictionary": {"Wayuu": (12, 172)},
         "Carib Grammar": {"Dict": (224, 451)},
         "Introduction à la langue des galibis": {"Book": (0, 28)},
         "Véritable relation": {"Dict": (7, 40)},
