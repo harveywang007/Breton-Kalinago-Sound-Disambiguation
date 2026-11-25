@@ -11,6 +11,13 @@ def main():
     files = {
         "Dictionaire françois-caraibe": {"Dict": (7, 416)},
         "Dictionaire caraibe-françois": {"Dict": (114, 300)},
+        "Grammaire caraibe": {
+            "Grammaire": (42, 112),
+            "Lettre": (128, 129),
+            "Introduction": (130, 132),
+            "Catéchisme": (134, 166),
+            "Chanson": (170, 173)
+        },
         "A Carib Dictionary": {"Dict": (27, 770)},
         "Trilingual Garifuna Dictionary": {
             "Garifuna": (20, 154),
